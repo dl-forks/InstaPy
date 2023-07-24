@@ -1181,6 +1181,9 @@ def get_relationship_counts(browser, username, logger):
     # then do not navigate to it again
     web_address_navigator(browser, user_link)
 
+    extract_number = lambda s: re.search(r"(\d+)", s).group(1)
+    # current contents are "NNN followers"
+
     try:
         followers_count = browser.execute_script(
             "return window._sharedData.entry_data."
@@ -1189,14 +1192,11 @@ def get_relationship_counts(browser, username, logger):
 
     except WebDriverException:
         try:
-            followers_count = format_number(
-                browser.find_element(
-                    By.XPATH,
-                    str(
-                        read_xpath(get_relationship_counts.__name__, "followers_count")
-                    ),
-                ).text
-            )
+            followers_count_text = browser.find_element(
+                By.XPATH,
+                str(read_xpath(get_relationship_counts.__name__, "followers_count")),
+            ).text
+            followers_count = format_number(extract_number(followers_count_text))
         except NoSuchElementException:
             try:
                 browser.execute_script("location.reload()")
@@ -1217,7 +1217,8 @@ def get_relationship_counts(browser, username, logger):
                     )
 
                     if topCount_elements:
-                        followers_count = format_number(topCount_elements[1].text)
+                        topCount_text = topCount_elements[1].text
+                        followers_count = format_number(extract_number(topCount_text))
                     else:
                         logger.info(
                             "Failed to get followers count of '{}'  ~empty "
@@ -1240,13 +1241,13 @@ def get_relationship_counts(browser, username, logger):
 
     except WebDriverException:
         try:
-            following_count = format_number(
+            following_count = format_number(extract_number(
                 browser.find_element(
                     By.XPATH,
                     str(
                         read_xpath(get_relationship_counts.__name__, "following_count")
                     ),
-                ).text
+                ).text)
             )
 
         except NoSuchElementException:
@@ -1269,7 +1270,7 @@ def get_relationship_counts(browser, username, logger):
                     )
 
                     if topCount_elements:
-                        following_count = format_number(topCount_elements[2].text)
+                        following_count = format_number(extract_number(topCount_elements[2].text))
                     else:
                         logger.info(
                             "Failed to get following count of '{}'  ~empty "
@@ -2634,7 +2635,7 @@ def get_additional_data(browser):
     #         break
     original_url = browser.current_url
     if not additional_data:
-        browser.get('view-source:'+ browser.current_url +'?__a=1&__d=dis')
+        browser.get("view-source:" + browser.current_url + "?__a=1&__d=dis")
         text = browser.find_element(By.TAG_NAME, "pre").text
         additional_data = json.loads(re.search("{.*}", text).group())
         browser.get(original_url)
@@ -2651,7 +2652,7 @@ def get_shared_data(browser):
     :return shared_data: Json data from window._sharedData extracted from page source
     """
     shared_data = None
-    browser.get('view-source:'+ browser.current_url +'?__a=1&__d=dis')
+    browser.get("view-source:" + browser.current_url + "?__a=1&__d=dis")
     text = browser.find_element(By.TAG_NAME, "pre").text
     shared_data = json.loads(re.search("{.*}", text).group())
 

@@ -30,7 +30,7 @@ from .xpath import read_xpath
 
 
 def bypass_suspicious_login(
-    browser, logger, logfolder, bypass_security_challenge_using
+        browser, logger, logfolder, bypass_security_challenge_using
 ):
     """Bypass suspicious loggin attempt verification."""
 
@@ -176,8 +176,8 @@ def check_browser(browser, logfolder, logger, proxy_address):
         pre = browser.find_element(By.TAG_NAME, "pre").text
         current_ip_info = json.loads(pre)
         if (
-            proxy_address is not None
-            and socket.gethostbyname(proxy_address) != current_ip_info["ip"]
+                proxy_address is not None
+                and socket.gethostbyname(proxy_address) != current_ip_info["ip"]
         ):
             logger.warning("- Proxy is set, but it's not working properly")
             logger.warning(
@@ -229,15 +229,15 @@ def check_browser(browser, logfolder, logger, proxy_address):
 
 
 def login_user(
-    browser,
-    username,
-    password,
-    logger,
-    logfolder,
-    proxy_address,
-    security_code_to_phone,
-    security_codes,
-    want_check_browser,
+        browser,
+        username,
+        password,
+        logger,
+        logfolder,
+        proxy_address,
+        security_code_to_phone,
+        security_codes,
+        want_check_browser,
 ):
     """Logins the user with the given username and password"""
     assert username, "Username not provided"
@@ -294,7 +294,7 @@ def login_user(
         return True
 
     # This fix comes from comment in #6060 If not necessary we can remove it
-    accept_igcookie_dialogue(browser, logger)
+    # accept_igcookie_dialogue(browser, logger)
 
     # if user is still not logged in, then there is an issue with the cookie
     # so go create a new cookie.
@@ -332,38 +332,18 @@ def login_user(
 
     web_address_navigator(browser, ig_homepage)
 
-    # Check if the first div is 'Create an Account' or 'Log In'
     try:
-        login_elem = browser.find_element(
-            By.XPATH, read_xpath(login_user.__name__, "login_elem")
-        )
+        # get the button that materializes the login form on-click
+        loginbtn = browser.find_elements(By.TAG_NAME, "button")[1]
     except NoSuchElementException:
-        logger.warning("Login A/B test detected! Trying another string...")
-        try:
-            login_elem = browser.find_element(
-                By.XPATH,
-                read_xpath(login_user.__name__, "login_elem_no_such_exception"),
-            )
-        except NoSuchElementException:
-            logger.warning("Could not pass the login A/B test. Trying last string...")
-            try:
-                login_elem = browser.find_element(
-                    By.XPATH,
-                    read_xpath(login_user.__name__, "login_elem_no_such_exception_2"),
-                )
-            except NoSuchElementException as e:
-                # NF: start
-                logger.exception(
-                    "Login A/B test failed!\n\t{}".format(str(e).encode("utf-8"))
-                )
-                return False
-                # NF: end
+        logger.warning("'Log In' Button not found")
+        return False
 
-    if login_elem is not None:
+    if loginbtn is not None:
         try:
-            (ActionChains(browser).move_to_element(login_elem).click().perform())
+            (ActionChains(browser).move_to_element(loginbtn).click().perform())
         except MoveTargetOutOfBoundsException:
-            login_elem.click()
+            loginbtn.click()
 
         # update server calls
         update_activity(browser, state=None)
@@ -439,7 +419,7 @@ def login_user(
     # IG: "Accept cookies from Instagram on this browser?"
     # They said that they're using cookies to help to personalize the content,
     # server relevant ads and provide safer experience.
-    accept_igcookie_dialogue(browser, logger)
+    # accept_igcookie_dialogue(browser, logger)
 
     # check for login error messages and display it in the logs
     if "instagram.com/challenge" in browser.current_url:
